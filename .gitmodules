@@ -1,0 +1,9 @@
+[submodule "libs/mmpr"]
+	path = libs/mmpr
+	url = git@github.com:Schwaggot/mmpr.git
+[submodule "libs/libtins"]
+	path = libs/libtins
+	url = git@github.com:mfontanini/libtins.git
+[submodule "libs/sole"]
+	path = libs/sole
+	url = git@github.com:r-lyeh-archived/sole.git
