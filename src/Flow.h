@@ -24,7 +24,8 @@ public:
         }
         lastTimestamp = packet.timestamp;
 
-        ++packets;
+        packets += 1;
+        bytes += packet.length;
     }
 
     bool operator==(const Flow& rhs) const {
@@ -40,6 +41,7 @@ public:
     std::chrono::microseconds firstTimestamp = std::chrono::microseconds::zero();
     std::chrono::microseconds lastTimestamp = std::chrono::microseconds::zero();
     uint64_t packets = 0;
+    uint64_t bytes = 0;
 };
 
 #endif // PCAP_FLOW_SPLITTER_FLOW_H

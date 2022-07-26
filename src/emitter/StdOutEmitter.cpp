@@ -27,6 +27,7 @@ void StdOutEmitter::emitFlows(const std::vector<Flow>& flows) const {
         }
         cout << setw(5) << flow.flowId.hiPort << " ";
 
-        cout << flow.packets << endl;
+        cout << setw(5) << flow.packets << " ";
+        cout << setw(5) << flow.bytes << endl;
     }
 }
