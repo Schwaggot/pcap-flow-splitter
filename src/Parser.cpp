@@ -25,14 +25,8 @@ unique_ptr<Packet> Parser::parse(const mmpr::Packet& mmprPacket, uint16_t dlt) {
     case DLT_LINUX_SLL: {
         // aka LINKTYPE_LINUX_SLL aka "Linux cooked capture encapsulation"
         try {
-            unique_ptr<Tins::SLL> sll(
-                new Tins::SLL(mmprPacket.data, mmprPacket.captureLength));
-            // packet.layer3Proto = sll->protocol();
-            pdu = move(sll);
+            pdu = make_unique<Tins::SLL>(mmprPacket.data, mmprPacket.captureLength);
         } catch (const Tins::malformed_packet& e) {
-            // if type is SLL and we cannot parse it do not continue
-            // packet.flags.malformed = true;
-            cerr << "malformed SLL packet" << endl;
             return nullptr;
         }
         break;
@@ -44,20 +38,19 @@ unique_ptr<Packet> Parser::parse(const mmpr::Packet& mmprPacket, uint16_t dlt) {
         // undefined, fall back to EthernetII
     case DLT_EN10MB:
         // aka LINKTYPE_ETHERNET
-        // parsing up to layer 4
         try {
-            unique_ptr<Tins::EthernetII> eth(
-                new Tins::EthernetII(mmprPacket.data, mmprPacket.captureLength));
-            // packet.layer3Proto = eth->payload_type();
-            pdu = move(eth);
+            pdu =
+                make_unique<Tins::EthernetII>(mmprPacket.data, mmprPacket.captureLength);
         } catch (const Tins::malformed_packet& e) {
-            // it might still be parsable as DOT3, do not give up yet
+            return nullptr;
         }
         break;
     default:
         cerr << "parser encountered unknown datalink type: " << to_string(dlt) << endl;
         return nullptr;
     }
+
+    assert(pdu);
 
     // IP reassembly
     switch (ipReassembler.process(*pdu)) {
