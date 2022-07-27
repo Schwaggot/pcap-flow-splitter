@@ -61,3 +61,23 @@ The following dependencies are bundled into the project as git submodules:
 ## TODO
 
 - Terminate flows on TCP connection close (FIN/ACK)
+
+## Feature extraction
+
+### CICFlowMeter
+
+Download and start CICFlowMeter (requires Java):
+
+```shell
+git clone https://github.com/ahlashkari/CICFlowMeter.git
+cd CICFlowMeter/
+./gradlew execute
+```
+
+Select NetWork -> Offline:
+![](docs/screenshot_cicflowmeter_select_offline.png)
+
+Select the folder with split PCAP files as Pcap dir and an arbitrary folder for output:
+![](docs/screenshot_cicflowmeter_select_files.png)
+
+Click OK, which will generate a csv file for each PCAP file.
