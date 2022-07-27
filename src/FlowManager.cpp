@@ -11,6 +11,10 @@ FlowManager::FlowManager(const string& outputDirectory,
                          chrono::seconds flowTimeout,
                          bool dryRun)
     : outputDirectory(outputDirectory), flowTimeout(flowTimeout), dryRun(dryRun) {
+    if (dryRun) {
+        return;
+    }
+
     if (!boost::filesystem::exists(outputDirectory)) {
         boost::filesystem::create_directories(outputDirectory);
     }
