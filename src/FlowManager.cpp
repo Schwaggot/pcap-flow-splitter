@@ -42,7 +42,9 @@ void FlowManager::onPacket(const Packet& packet, const mmpr::Packet& mmprPacket)
         pcapPacketHeader.len = pcapPacketHeader.caplen;
         pcapPacketHeader.ts.tv_sec = mmprPacket.timestampSeconds;
         pcapPacketHeader.ts.tv_usec = mmprPacket.timestampMicroseconds;
-        pcap_dump((u_char*)pcapDumperNonIp, &pcapPacketHeader, mmprPacket.data);
+        if (!dryRun) {
+            pcap_dump((u_char*)pcapDumperNonIp, &pcapPacketHeader, mmprPacket.data);
+        }
         return;
     }
 
