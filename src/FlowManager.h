@@ -11,7 +11,9 @@
 
 class FlowManager {
 public:
-    FlowManager(const std::string& outputDirectory, std::chrono::seconds flowTimeout);
+    FlowManager(const std::string& outputDirectory,
+                std::chrono::seconds flowTimeout,
+                bool dryRun);
     ~FlowManager();
 
     void onPacket(const Packet& packet, const mmpr::Packet& mmprPacket);
@@ -27,6 +29,7 @@ private:
 
     std::string outputDirectory;
     std::chrono::seconds flowTimeout;
+    bool dryRun;
     pcap_t* pcapHandleNonIp;
     pcap_dumper_t* pcapDumperNonIp;
     std::vector<pcap_t*> pcapHandles;

@@ -7,8 +7,10 @@ using namespace std;
 
 static uint64_t counter = 0;
 
-FlowManager::FlowManager(const string& outputDirectory, chrono::seconds flowTimeout)
-    : outputDirectory(outputDirectory), flowTimeout(flowTimeout) {
+FlowManager::FlowManager(const string& outputDirectory,
+                         chrono::seconds flowTimeout,
+                         bool dryRun)
+    : outputDirectory(outputDirectory), flowTimeout(flowTimeout), dryRun(dryRun) {
     if (!boost::filesystem::exists(outputDirectory)) {
         boost::filesystem::create_directories(outputDirectory);
     }
@@ -52,8 +54,8 @@ void FlowManager::onPacket(const Packet& packet, const mmpr::Packet& mmprPacket)
 
             Flow flow(counter++);
             createOutputFile(flow);
-            flow.onPacket(packet, mmprPacket);
             writePacket(flow, packet, mmprPacket);
+            flow.onPacket(packet, mmprPacket);
             flows.insert(make_pair(flowId, flow));
         } else {
             // update flow
@@ -65,13 +67,17 @@ void FlowManager::onPacket(const Packet& packet, const mmpr::Packet& mmprPacket)
     } else {
         Flow flow(counter++);
         createOutputFile(flow);
-        flow.onPacket(packet, mmprPacket);
         writePacket(flow, packet, mmprPacket);
+        flow.onPacket(packet, mmprPacket);
         flows.insert(make_pair(flowId, flow));
     }
 }
 
 void FlowManager::createOutputFile(const Flow& flow) {
+    if (dryRun) {
+        return;
+    }
+
     auto filename = "flow_" + to_string(flow.index) + ".pcap";
     auto filepath = boost::filesystem::path(outputDirectory) / filename;
 
@@ -84,6 +90,10 @@ void FlowManager::createOutputFile(const Flow& flow) {
 void FlowManager::writePacket(const Flow& flow,
                               const Packet& packet,
                               const mmpr::Packet& mmprPacket) {
+    if (dryRun) {
+        return;
+    }
+
     auto pcapDumper = pcapDumpers[flow.index];
 
     struct pcap_pkthdr pcapPacketHeader;
@@ -100,7 +110,7 @@ void FlowManager::emit() {
     for (const auto& kv : flows) {
         flowsVec.push_back(kv.second);
     }
-    for (const auto& flow: timedOutFlows) {
+    for (const auto& flow : timedOutFlows) {
         flowsVec.push_back(flow);
     }
     sort(flowsVec.begin(), flowsVec.end(),

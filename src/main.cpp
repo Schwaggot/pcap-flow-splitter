@@ -13,6 +13,7 @@ int main(int argc, char** argv) {
     std::vector<std::string> pcapFiles;
     std::string outputDirectory;
     uint32_t flowTimeoutSeconds;
+    bool dryRun = false;
 
     // Declare the supported options.
     po::options_description desc("Allowed options");
@@ -28,6 +29,8 @@ int main(int argc, char** argv) {
         "timeout,T",
         boost::program_options::value<uint32_t>(&flowTimeoutSeconds)->default_value(120),
         "timeout for inactive flows (in seconds)");
+    desc.add_options()("dry-run", po::bool_switch(&dryRun)->default_value(false),
+                       "do not write files");
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -63,7 +66,7 @@ int main(int argc, char** argv) {
         uint64_t numPackets = 0;
         mmpr::Packet mmprPacket;
         Parser parser;
-        FlowManager flowManager(outputDirectory, flowTimeout);
+        FlowManager flowManager(outputDirectory, flowTimeout, dryRun);
 
         while (!pcapReader->isExhausted()) {
             if (!pcapReader->readNextPacket(mmprPacket)) {
