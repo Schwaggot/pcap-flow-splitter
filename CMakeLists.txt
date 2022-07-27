@@ -32,3 +32,10 @@ target_link_libraries(pcap_flow_splitter
         Boost::filesystem
         Boost::program_options
         )
+target_compile_options(pcap_flow_splitter
+        PRIVATE
+        -Wall
+        -Wpedantic
+        -Wextra
+        $<$<CONFIG:RELEASE>:-O3>
+        )
