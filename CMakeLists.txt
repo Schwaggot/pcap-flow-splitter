@@ -37,5 +37,5 @@ target_compile_options(pcap_flow_splitter
         -Wall
         -Wpedantic
         -Wextra
-        $<$<CONFIG:RELEASE>:-O3>
+        $<$<CONFIG:Release>:-O3>
         )
