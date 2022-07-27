@@ -28,8 +28,8 @@ public:
 
     sole::uuid traceSource = {0, 0};
     std::variant<Tins::IPv4Address, Tins::IPv6Address> loIp;
-    std::variant<Tins::IPv4Address, Tins::IPv6Address> hiIp;
     uint16_t loPort = 0;
+    std::variant<Tins::IPv4Address, Tins::IPv6Address> hiIp;
     uint16_t hiPort = 0;
 
     bool operator==(const FlowId& rhs) const {
