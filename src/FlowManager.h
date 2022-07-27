@@ -1,6 +1,7 @@
 #ifndef PCAP_FLOW_SPLITTER_FLOWMANAGER_H
 #define PCAP_FLOW_SPLITTER_FLOWMANAGER_H
 
+#include "Config.h"
 #include "Flow.h"
 #include "FlowId.h"
 #include "Packet.h"
@@ -11,9 +12,7 @@
 
 class FlowManager {
 public:
-    FlowManager(const std::string& outputDirectory,
-                std::chrono::seconds flowTimeout,
-                bool dryRun);
+    FlowManager(const Config& config);
     ~FlowManager();
 
     void onPacket(const Packet& packet, const mmpr::Packet& mmprPacket);
@@ -27,9 +26,7 @@ private:
     void
     writePacket(const Flow& flow, const Packet& packet, const mmpr::Packet& mmprPacket);
 
-    std::string outputDirectory;
-    std::chrono::seconds flowTimeout;
-    bool dryRun;
+    const Config& config;
     pcap_t* pcapHandleNonIp;
     pcap_dumper_t* pcapDumperNonIp;
     std::vector<pcap_t*> pcapHandles;

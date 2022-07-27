@@ -7,20 +7,17 @@ using namespace std;
 
 static uint64_t counter = 0;
 
-FlowManager::FlowManager(const string& outputDirectory,
-                         chrono::seconds flowTimeout,
-                         bool dryRun)
-    : outputDirectory(outputDirectory), flowTimeout(flowTimeout), dryRun(dryRun) {
-    if (dryRun) {
+FlowManager::FlowManager(const Config& config) : config(config) {
+    if (config.dryRun) {
         return;
     }
 
-    if (!boost::filesystem::exists(outputDirectory)) {
-        boost::filesystem::create_directories(outputDirectory);
+    if (!boost::filesystem::exists(config.outputDirectory)) {
+        boost::filesystem::create_directories(config.outputDirectory);
     }
 
     auto filename = "non-ip_flows.pcap";
-    auto filepath = boost::filesystem::path(outputDirectory) / filename;
+    auto filepath = boost::filesystem::path(config.outputDirectory) / filename;
 
     pcapHandleNonIp = pcap_open_dead(DLT_EN10MB, 1 << 16);
     pcapDumperNonIp = pcap_dump_open(pcapHandleNonIp, filepath.c_str());
@@ -42,7 +39,7 @@ void FlowManager::onPacket(const Packet& packet, const mmpr::Packet& mmprPacket)
         pcapPacketHeader.len = pcapPacketHeader.caplen;
         pcapPacketHeader.ts.tv_sec = mmprPacket.timestampSeconds;
         pcapPacketHeader.ts.tv_usec = mmprPacket.timestampMicroseconds;
-        if (!dryRun) {
+        if (!config.dryRun) {
             pcap_dump((u_char*)pcapDumperNonIp, &pcapPacketHeader, mmprPacket.data);
         }
         return;
@@ -53,7 +50,7 @@ void FlowManager::onPacket(const Packet& packet, const mmpr::Packet& mmprPacket)
     // lookup if flow already exists
     auto it = flows.find(flowId);
     if (it != flows.end()) {
-        if ((packet.timestamp - it->second.lastTimestamp) > flowTimeout) {
+        if ((packet.timestamp - it->second.lastTimestamp) > config.flowTimeout) {
             // on access timeout
             timedOutFlows.push_back(it->second);
             flows.erase(it->first);
@@ -80,12 +77,12 @@ void FlowManager::onPacket(const Packet& packet, const mmpr::Packet& mmprPacket)
 }
 
 void FlowManager::createOutputFile(const Flow& flow) {
-    if (dryRun) {
+    if (config.dryRun) {
         return;
     }
 
     auto filename = "flow_" + to_string(flow.index) + ".pcap";
-    auto filepath = boost::filesystem::path(outputDirectory) / filename;
+    auto filepath = boost::filesystem::path(config.outputDirectory) / filename;
 
     auto pcapHandle = pcap_open_dead(DLT_EN10MB, 1 << 16);
     auto pcapDumper = pcap_dump_open(pcapHandle, filepath.c_str());
@@ -96,7 +93,7 @@ void FlowManager::createOutputFile(const Flow& flow) {
 void FlowManager::writePacket(const Flow& flow,
                               const Packet& packet,
                               const mmpr::Packet& mmprPacket) {
-    if (dryRun) {
+    if (config.dryRun) {
         return;
     }
 

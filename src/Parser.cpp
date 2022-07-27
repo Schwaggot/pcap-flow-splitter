@@ -13,6 +13,12 @@
 
 using namespace std;
 
+Parser::Parser(const Config& config) : config(config) {
+    if (config.ipReassembly) {
+        ipReassembler = make_unique<Tins::IPv4Reassembler>();
+    }
+}
+
 unique_ptr<Packet> Parser::parse(const mmpr::Packet& mmprPacket, uint16_t dlt) {
     unique_ptr<Packet> packet = make_unique<Packet>();
     packet->length = mmprPacket.captureLength;
@@ -52,15 +58,17 @@ unique_ptr<Packet> Parser::parse(const mmpr::Packet& mmprPacket, uint16_t dlt) {
 
     assert(pdu);
 
-    // IP reassembly
-    switch (ipReassembler.process(*pdu)) {
-    case Tins::IPv4Reassembler::PacketStatus::FRAGMENTED:
-        return nullptr;
-    case Tins::IPv4Reassembler::PacketStatus::REASSEMBLED:
-        packet->length = pdu->size();
-        break;
-    case Tins::IPv4Reassembler::PacketStatus::NOT_FRAGMENTED:
-        break;
+    if (config.ipReassembly) {
+        // IP reassembly
+        switch (ipReassembler->process(*pdu)) {
+        case Tins::IPv4Reassembler::PacketStatus::FRAGMENTED:
+            return nullptr;
+        case Tins::IPv4Reassembler::PacketStatus::REASSEMBLED:
+            packet->length = pdu->size();
+            break;
+        case Tins::IPv4Reassembler::PacketStatus::NOT_FRAGMENTED:
+            break;
+        }
     }
 
     // retrieve IP and port information
