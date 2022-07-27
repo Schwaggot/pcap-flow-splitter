@@ -61,9 +61,12 @@ int main(int argc, char** argv) {
                                 boost::filesystem::absolute(pcapFile).string());
         }
 
+        auto start = chrono::high_resolution_clock::now();
+
         auto pcapReader = mmpr::FileReader::getReader(pcapFile);
         pcapReader->open();
-        uint64_t numPackets = 0;
+        uint64_t packets = 0;
+        uint64_t bytes = 0;
         mmpr::Packet mmprPacket;
         Parser parser;
         FlowManager flowManager(outputDirectory, flowTimeout, dryRun);
@@ -73,7 +76,8 @@ int main(int argc, char** argv) {
                 continue;
             }
 
-            ++numPackets;
+            packets += 1;
+            bytes += mmprPacket.captureLength;
 
             auto packet = parser.parse(mmprPacket, pcapReader->getDataLinkType());
             if (!packet) {
@@ -83,13 +87,24 @@ int main(int argc, char** argv) {
             flowManager.onPacket(*packet, mmprPacket);
         }
 
+        auto end = chrono::high_resolution_clock::now();
+        auto durationMs = chrono::duration_cast<chrono::milliseconds>(end - start);
+        auto durationS = chrono::duration_cast<chrono::seconds>(end - start);
+        auto packetsPerSecond = packets / durationS.count();
+        auto gbPerSecond = (double) bytes / durationS.count() / 1000 / 1000 / 1000;
+
         flowManager.emit();
 
         cout << endl;
-        cout << "Read " << numPackets << " packet(s) from "
+        cout << "Finished in " << durationMs.count() << "ms" << endl;
+        cout << "Read " << packets << " packet(s) from "
+             << boost::filesystem::absolute(pcapFile).string() << endl;
+        cout << "Read " << bytes << " byte(s) from "
              << boost::filesystem::absolute(pcapFile).string() << endl;
         cout << "Found " << (flowManager.flows.size() + flowManager.timedOutFlows.size())
              << " flow(s)" << endl;
+        cout << "Throughput: " << packetsPerSecond << " packets/s, " << gbPerSecond
+             << " gb/s" << endl;
         cout << endl;
     }
 }
