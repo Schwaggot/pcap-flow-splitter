@@ -14,7 +14,7 @@ class Flow {
 public:
     Flow(size_t index) : index(index) {}
 
-    void onPacket(const Packet& packet, const mmpr::Packet& mmprPacket) {
+    void onPacket(const Packet& packet) {
         assert(!packet.nonIP);
 
         flowId = *packet.flowId();

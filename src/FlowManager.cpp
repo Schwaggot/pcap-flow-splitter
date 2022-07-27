@@ -61,12 +61,12 @@ void FlowManager::onPacket(const Packet& packet, const mmpr::Packet& mmprPacket)
             Flow flow(counter++);
             createOutputFile(flow);
             writePacket(flow, packet, mmprPacket);
-            flow.onPacket(packet, mmprPacket);
+            flow.onPacket(packet);
             flows.insert(make_pair(flowId, flow));
         } else {
             // update flow
             Flow flow = it->second;
-            flow.onPacket(packet, mmprPacket);
+            flow.onPacket(packet);
             writePacket(flow, packet, mmprPacket);
             flows.insert_or_assign(flowId, flow);
         }
@@ -74,7 +74,7 @@ void FlowManager::onPacket(const Packet& packet, const mmpr::Packet& mmprPacket)
         Flow flow(counter++);
         createOutputFile(flow);
         writePacket(flow, packet, mmprPacket);
-        flow.onPacket(packet, mmprPacket);
+        flow.onPacket(packet);
         flows.insert(make_pair(flowId, flow));
     }
 }
