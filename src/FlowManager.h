@@ -20,6 +20,7 @@ public:
 
     std::unordered_map<FlowId, Flow> flows;
     std::vector<Flow> timedOutFlows;
+    std::vector<Flow> finishedTcpFlows;
 
 private:
     void createOutputFile(const Flow& flow);

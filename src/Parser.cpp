@@ -81,8 +81,10 @@ unique_ptr<Packet> Parser::parse(const mmpr::Packet& mmprPacket, uint16_t dlt) {
             switch (ipv4->protocol()) {
             case Tins::Constants::IP::PROTO_TCP: {
                 Tins::TCP* tcp = dynamic_cast<Tins::TCP*>(ipv4->inner_pdu());
+                packet->tcp = true;
                 packet->srcPort = tcp->sport();
                 packet->dstPort = tcp->dport();
+                packet->setTCPFlags(tcp);
                 break;
             }
             case Tins::Constants::IP::PROTO_UDP: {
@@ -107,8 +109,10 @@ unique_ptr<Packet> Parser::parse(const mmpr::Packet& mmprPacket, uint16_t dlt) {
             switch (ipv6->next_header()) {
             case Tins::Constants::IP::PROTO_TCP: {
                 Tins::TCP* tcp = dynamic_cast<Tins::TCP*>(ipv6->inner_pdu());
+                packet->tcp = true;
                 packet->srcPort = tcp->sport();
                 packet->dstPort = tcp->dport();
+                packet->setTCPFlags(tcp);
                 break;
             }
             case Tins::Constants::IP::PROTO_UDP: {

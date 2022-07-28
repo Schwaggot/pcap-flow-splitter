@@ -34,12 +34,12 @@ FlowManager::~FlowManager() {
 
 void FlowManager::onPacket(const Packet& packet, const mmpr::Packet& mmprPacket) {
     if (packet.nonIP) {
-        struct pcap_pkthdr pcapPacketHeader;
-        pcapPacketHeader.caplen = packet.length;
-        pcapPacketHeader.len = pcapPacketHeader.caplen;
-        pcapPacketHeader.ts.tv_sec = mmprPacket.timestampSeconds;
-        pcapPacketHeader.ts.tv_usec = mmprPacket.timestampMicroseconds;
         if (!config.dryRun) {
+            struct pcap_pkthdr pcapPacketHeader;
+            pcapPacketHeader.caplen = packet.length;
+            pcapPacketHeader.len = pcapPacketHeader.caplen;
+            pcapPacketHeader.ts.tv_sec = mmprPacket.timestampSeconds;
+            pcapPacketHeader.ts.tv_usec = mmprPacket.timestampMicroseconds;
             pcap_dump((u_char*)pcapDumperNonIp, &pcapPacketHeader, mmprPacket.data);
         }
         return;
@@ -61,13 +61,31 @@ void FlowManager::onPacket(const Packet& packet, const mmpr::Packet& mmprPacket)
             flow.onPacket(packet);
             flows.insert(make_pair(flowId, flow));
         } else {
-            // update flow
-            Flow flow = it->second;
-            flow.onPacket(packet);
-            writePacket(flow, packet, mmprPacket);
-            flows.insert_or_assign(flowId, flow);
+            if (packet.tcp && packet.tcpFlags.SYN && it->second.tcpFlags.FIN > 0) {
+                // TCP SYN packet after having received at least 1 FIN previously
+                // -> connection was closed and is now getting re-used
+                cout << "closing TCP flow, received " << it->second.tcpFlags.FIN
+                     << " FIN packets, before receiving a SYN" << endl;
+
+                // close previous flow
+                finishedTcpFlows.push_back(it->second);
+                flows.erase(it->first);
+
+                // create new flow for current packet
+                Flow flow(counter++);
+                createOutputFile(flow);
+                writePacket(flow, packet, mmprPacket);
+                flow.onPacket(packet);
+                flows.insert(make_pair(flowId, flow));
+            } else {
+                // update flow
+                it->second.onPacket(packet);
+                writePacket(it->second, packet, mmprPacket);
+                flows.insert_or_assign(flowId, it->second);
+            }
         }
     } else {
+        // previously unseen flow, create new
         Flow flow(counter++);
         createOutputFile(flow);
         writePacket(flow, packet, mmprPacket);
@@ -114,6 +132,9 @@ void FlowManager::emit() {
         flowsVec.push_back(kv.second);
     }
     for (const auto& flow : timedOutFlows) {
+        flowsVec.push_back(flow);
+    }
+    for (const auto& flow : finishedTcpFlows) {
         flowsVec.push_back(flow);
     }
     sort(flowsVec.begin(), flowsVec.end(),

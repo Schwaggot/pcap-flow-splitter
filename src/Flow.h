@@ -26,15 +26,18 @@ public:
 
         packets += 1;
         bytes += packet.length;
+
+        if (packet.tcp) {
+            tcpFlags.SYN += packet.tcpFlags.SYN;
+            tcpFlags.ACK += packet.tcpFlags.ACK;
+            tcpFlags.FIN += packet.tcpFlags.FIN;
+            tcpFlags.RST += packet.tcpFlags.RST;
+        }
     }
 
-    bool operator==(const Flow& rhs) const {
-        return flowId == rhs.flowId;
-    }
+    bool operator==(const Flow& rhs) const { return flowId == rhs.flowId; }
     bool operator!=(const Flow& rhs) const { return !(rhs == *this); }
-    bool operator<(const Flow& rhs) const {
-        return flowId < rhs.flowId;
-    }
+    bool operator<(const Flow& rhs) const { return flowId < rhs.flowId; }
 
     size_t index;
     FlowId flowId;
@@ -42,6 +45,13 @@ public:
     std::chrono::microseconds lastTimestamp = std::chrono::microseconds::zero();
     uint64_t packets = 0;
     uint64_t bytes = 0;
+
+    struct {
+        uint16_t SYN = 0;
+        uint16_t ACK = 0;
+        uint16_t FIN = 0;
+        uint16_t RST = 0;
+    } tcpFlags{};
 };
 
 #endif // PCAP_FLOW_SPLITTER_FLOW_H
